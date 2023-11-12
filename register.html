@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Face Detection</title>
+  <script defer src="face-api.min.js"></script>
+  <script defer src="script.js"></script>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+</head>
+<body>
+    <div class="card" id="container">
+        <h1>Upleaod Your Picture</h1>
+        <img for="input-file"  src="profile.png" id="profile">
+        <label for="input-file">Choose File</label>
+        <input type="file" accept="image/png, image/jpeg, image/jpg" id="input-file">
+        <form action="">
+            <input type="text" id="name" name="name" placeholder="Enter your name" required>
+            <button type="submit" id="submit">Submit</button>
+        </form>
+    </div>
+    <script>
+        let profilePic = document.getElementById("profile");
+        let inputFile = document.getElementById("input-file");
+        
+        inputFile.onchange = function(){
+        profilePic.src = URL.createObjectURL(inputFile.files[0]);
+        }
+
+        const submitButton = document.getElementById("submit");
+
+        submitButton.addEventListener("click", async (event) => {
+        event.preventDefault(); // Prevent the form from submitting
+
+        try {
+            const labeledFaceDescriptors = await detectAndSend();
+            
+            // If you want to do something with the response from the server, handle it here
+
+            // Clear the form
+            clearForm();
+        } catch (error) {
+            console.error("Error during face detection and sending:", error);
+        }
+        });
+
+        const detectAndSend = async () => {
+        try {
+            const detections = await faceapi
+            .detectAllFaces(profilePic)
+            .withFaceLandmarks()
+            .withFaceDescriptors();
+
+            if (detections) {
+            const labeledFaceDescriptors = detections.map((detection) => ({
+                label: document.getElementById("name").value,
+                descriptors: [detection.descriptor],
+            }));
+
+            await sendFaceDescriptorsToServer(labeledFaceDescriptors);
+
+            return labeledFaceDescriptors;
+            }
+        } catch (error) {
+            console.error("Error during face detection and sending:", error);
+            throw error; // Re-throw the error to be caught in the calling function
+        }
+        };
+
+        const clearForm = () => {
+        // Clear form elements
+        document.getElementById("name").value = "";
+        inputFile.value = ""; // Clear the file input
+        profilePic.src = "profile.png"; // Clear the profile picture
+        };
+
+    </script>
+</body>
+</html>
